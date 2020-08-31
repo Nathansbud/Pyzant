@@ -5,6 +5,7 @@ import json
 import os
 import re
 import time
+import atexit
 import math
 
 from selenium import webdriver
@@ -20,6 +21,7 @@ class Browser(webdriver.Chrome):
 
         super(Browser, self).__init__(options=self.options)
         self.implicitly_wait(implicit_wait)
+        atexit.register(self.quit)
 
     def get_and_wait(self, url, wait_for=10):
         self.get(url)
