@@ -98,7 +98,6 @@ def cs_filter(s):
     return any(fs in s.lower() for fs in filter_set)
 
 def send_messages(driver, ls, rate):
-    bill_at = rate
     for [url, msg] in ls:
         driver.get_and_wait(url)
 
@@ -107,17 +106,15 @@ def send_messages(driver, ls, rate):
         for checkbox in driver.find_elements_by_css_selector("input[type='checkbox']"):
             if checkbox.is_selected(): checkbox.click()
 
-        # if not "None" in payment_span:
-        #     payment_rec = int(payment_span.split("Recommended rate:")[1])
-        #     if payment_rec > bill_at: bill_at = payment_rec
+        rate_field = driver.find_element_by_id("hourly_rate").clear()
+        rate_field.send_keys(rate)
 
-        #driver.find_element_by_id("hourly_rate").send_keys(bill_at)
         driver.find_element_by_name("commit").click()
         driver.finish_loading()
 
 
 if __name__ == '__main__':
-    browser = Browser(headless=False)
+    browser = Browser(headless=True)
     login_selenium(browser, "Zack")
     listings = get_listings(browser, "Zack", max_pages=5)
     send_messages(browser, listings, config["Zack"]["rate"])
