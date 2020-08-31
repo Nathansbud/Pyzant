@@ -21,14 +21,6 @@ class Browser(webdriver.Chrome):
         super(Browser, self).__init__(options=self.options)
         self.implicitly_wait(implicit_wait)
 
-    @property
-    def wait(self): return self._wait
-
-    @wait.setter
-    def wait(self, value):
-        self._wait = value
-        self.implicitly_wait(value)
-
     def get_and_wait(self, url, wait_for=10):
         self.get(url)
         self.finish_loading(wait_for)
@@ -36,16 +28,15 @@ class Browser(webdriver.Chrome):
     def finish_loading(self, wait_for=10):
         WebDriverWait(self, wait_for).until(lambda d: d.execute_script('return document.readyState') == 'complete')
 
-with open(os.path.join(os.path.dirname(__file__), "credentials", "wyzant.json")) as jf: creds = json.load(jf)
+with open(os.path.join(os.path.dirname(__file__), "credentials", "wyzant.json")) as jf: config = json.load(jf)
 def login_selenium(driver, tutor):
     driver.get("https://www.wyzant.com/login")
 
     #Login
-    driver.find_elements_by_name('Username')[-1].send_keys(creds[tutor]['username'])
-    driver.find_elements_by_name('Password')[-1].send_keys(creds[tutor]['password'])
+    driver.find_elements_by_name('Username')[-1].send_keys(config[tutor]['username'])
+    driver.find_elements_by_name('Password')[-1].send_keys(config[tutor]['password'])
     driver.find_element_by_xpath("//button[@formnovalidate]").click()
     driver.finish_loading()
-
 
 def get_listings(driver, tutor, max_pages="*"):
     while driver.current_url != "https://www.wyzant.com/tutor/jobs":
@@ -54,19 +45,26 @@ def get_listings(driver, tutor, max_pages="*"):
     lpp = 10
     total_pages = min(int(driver.find_element_by_class_name("text-bold").text) // lpp + 1, max_pages if isinstance(max_pages, int) else math.inf)
 
+    clients = []
+
     for page in range(total_pages):
         for i, listing in enumerate(driver.find_elements_by_class_name("academy-card")):
             job_header = listing.find_element_by_class_name("job-details-link")
             job_link, job_category = job_header.get_attribute('href'), job_header.text
             student_name = listing.find_element_by_tag_name('p').text
+            is_partnership = "Required" in listing.find_element_by_class_name("text-semibold.text-underscore").text
             desc = listing.find_element_by_class_name('job-description').text
 
-            if message := build_template(tutor, student_name, job_category, desc):
-                print(f"Reply to {student_name}, {job_category}:")
-                print(message)
+            message = build_template(tutor, student_name, job_category, desc)
+            if message and not is_partnership:
+                print(job_link, message)
+                clients.append([job_link, message])
             else:
-                print(f"Listing for {student_name} in category {job_category} was filtered out; link: {job_link}")
+                print(f"Listing for {student_name} ({'P' if is_partnership else 'NP'}) in category {job_category} was filtered out; link: {job_link}")
+
         driver.get(f"https://www.wyzant.com/tutor/jobs?page={page+2}")
+
+    return clients
 
 
 def build_template(tutor, student, subject, desc):
@@ -88,16 +86,39 @@ def build_template(tutor, student, subject, desc):
 
 
 def cs_filter(s):
-    filter_set = ["reinforcement learning", "deep learning", "machine learning", "tensorflow", " ml ", "kubernetes", "nlp", "computer vision", #ML filters
-                  "react", "angular", #js frameworks
+    filter_set = ["camera", "reinforcement learning", "deep learning", "machine learning", "tensorflow", #ml stuff
+                  " ml ", "kubernetes", "nlp", "computer vision", "object detection", "knn", #more ml stuff
+                  "react", "angular", "mern", " mean ", #js stuff
                   "unreal", "unity", "roblox", "minecraft", #gamedev
-                  "c++", "bash", "ruby", "sql", "gdb", "graphql", "php" #technologies I can't teach
-                  ]
+                  "xcode", "c++", "bash", "powershell", "azure", "ruby", "sql", "gdb", "graphql", "php", "vhdl", " sas ", "ptc creo", "kotlin", #technologies ic/dw teach
+                  "network security", "computer systems", "penetration testing", "pen testing", "data structures and algorithms", #fields idw/can't teach
+                  "in-person" #misc filters
+                 ]
 
-    return any(fs in s for fs in filter_set)
+    return any(fs in s.lower() for fs in filter_set)
+
+def send_messages(driver, ls, rate):
+    bill_at = rate
+    for [url, msg] in ls:
+        driver.get_and_wait(url)
+
+
+        driver.find_element_by_id("personal_message").send_keys(msg)
+        for checkbox in driver.find_elements_by_css_selector("input[type='checkbox']"):
+            if checkbox.is_selected(): checkbox.click()
+
+        # if not "None" in payment_span:
+        #     payment_rec = int(payment_span.split("Recommended rate:")[1])
+        #     if payment_rec > bill_at: bill_at = payment_rec
+
+        #driver.find_element_by_id("hourly_rate").send_keys(bill_at)
+        driver.find_element_by_name("commit").click()
+        driver.finish_loading()
 
 
 if __name__ == '__main__':
     browser = Browser(headless=False)
     login_selenium(browser, "Zack")
-    get_listings(browser, "Zack", max_pages=5)
+    listings = get_listings(browser, "Zack", max_pages=5)
+    send_messages(browser, listings, config["Zack"]["rate"])
+
