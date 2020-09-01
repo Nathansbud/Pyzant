@@ -1,3 +1,5 @@
+#!/Users/zackamiton/Code/Pyzant/venv/bin/python
+
 from templates import templates
 
 import requests
@@ -19,7 +21,7 @@ class Browser(webdriver.Chrome):
         self.options = webdriver.ChromeOptions()
         if headless: self.options.add_argument("headless")
 
-        super(Browser, self).__init__(options=self.options)
+        super(Browser, self).__init__(executable_path="/usr/local/bin/chromedriver", options=self.options)
         self.implicitly_wait(implicit_wait)
         atexit.register(self.quit)
 
@@ -50,7 +52,7 @@ def get_listings(driver, tutor, max_pages="*"):
     clients = []
 
     for page in range(total_pages):
-        for i, listing in enumerate(driver.find_elements_by_class_name("academy-card")):
+        for listing in driver.find_elements_by_class_name("academy-card"):
             job_header = listing.find_element_by_class_name("job-details-link")
             job_link, job_category = job_header.get_attribute('href'), job_header.text
             student_name = listing.find_element_by_tag_name('p').text
@@ -81,20 +83,22 @@ def build_template(tutor, student, subject, desc):
     else:
         if cs_filter(desc.lower()):
             return None
-        if re.search("(college app|common\s?app)", desc.lower()) and subject != 'College Counselling':
+        if re.search(r"(college app|common\s?app)", desc.lower()) and subject != 'College Counselling':
             subject = 'College Counselling'
 
         return replace_generics(template_set[subject])
 
 
 def cs_filter(s):
-    filter_set = ["camera", "reinforcement learning", "deep learning", "machine learning", "tensorflow", #ml stuff
+    filter_set = ["camera", "reinforcement learning", "deep learning", "machine learning", "tensorflow", "gpt", #ml stuff
                   " ml ", "kubernetes", "nlp", "computer vision", "object detection", "knn", #more ml stuff
                   "react", "angular", "mern", " mean ", #js stuff
                   "unreal", "unity", "roblox", "minecraft", #gamedev
-                  "xcode", "c++", "bash", "powershell", "azure", "ruby", "sql", "gdb", "graphql", "php", "vhdl", " sas ", "ptc creo", "kotlin", #technologies ic/dw teach
-                  "network security", "computer systems", "penetration testing", "pen testing", "data structures and algorithms", #fields idw/can't teach
-                  "in-person" #misc filters
+                  "aws", "xcode", " sas ", "ptc creo", "azure", "powerbi", #technologies ic/dw teach
+                  "c++", "bash", "powershell", "ruby", "sql", "gdb", "graphql", "php", "vhdl", "scheme", "haskell", "kotlin", #languages
+                  "network", "computer systems", "penetration testing", "pen testing", "data structures and algorithms", #fields idw/can't teach
+                  "cloud computing", "systems analysis",#more fields idw/can't teach
+                  "amazon", "in-person", "algorithms" #misc filters
                  ]
 
     return any(fs in s.lower() for fs in filter_set)
@@ -103,17 +107,16 @@ def send_messages(driver, ls, rate):
     for [url, msg] in ls:
         driver.get_and_wait(url)
 
-
         driver.find_element_by_id("personal_message").send_keys(msg)
         for checkbox in driver.find_elements_by_css_selector("input[type='checkbox']"):
             if checkbox.is_selected(): checkbox.click()
 
-        rate_field = driver.find_element_by_id("hourly_rate").clear()
+        rate_field = driver.find_element_by_id("hourly_rate")
+        rate_field.clear()
         rate_field.send_keys(rate)
 
         driver.find_element_by_name("commit").click()
         driver.finish_loading()
-
 
 if __name__ == '__main__':
     browser = Browser(headless=True)
