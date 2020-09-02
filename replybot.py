@@ -89,19 +89,19 @@ def build_template(tutor, student, subject, desc):
         return replace_generics(template_set[subject])
 
 
-def cs_filter(s):
-    filter_set = ["camera", "reinforcement learning", "deep learning", "machine learning", "tensorflow", "gpt", #ml stuff
-                  " ml ", "kubernetes", "nlp", "computer vision", "object detection", "knn", #more ml stuff
-                  "react", "angular", "mern", " mean ", #js stuff
-                  "unreal", "unity", "roblox", "minecraft", #gamedev
-                  "aws", "xcode", " sas ", "ptc creo", "azure", "powerbi", #technologies ic/dw teach
-                  "c++", "bash", "powershell", "ruby", "sql", "gdb", "graphql", "php", "vhdl", "scheme", "haskell", "kotlin", #languages
-                  "network", "computer systems", "penetration testing", "pen testing", "data structures and algorithms", #fields idw/can't teach
-                  "cloud computing", "systems analysis",#more fields idw/can't teach
-                  "amazon", "in-person", "algorithms" #misc filters
-                 ]
 
-    return any(fs in s.lower() for fs in filter_set)
+def cs_filter(s):
+    filter_set = ["camera", "reinforcement learning", "deep learning", "machine learning", "tensorflow", "gpt", # ml stuff
+                  "ml", "kubernetes", "nlp", "computer vision", "object detection", "knn",  # more ml stuff
+                  "react", "angular", "mern", "stripe", "bootstrap",  # js stuff
+                  "unreal", "unity", "roblox", "minecraft",  # gamedev
+                  "aws", "xcode", "ptc creo", "azure", "powerbi", "blender",  # technologies ic/dw teach
+                  "c++", "bash", "powershell", "ruby", "sql", "gdb", "graphql", "php", "vhdl", "scheme", "haskell", "kotlin", "verilog",  # languages
+                  "cloud computing", "network", "systems", "testing", "linear programming", # fields idw/can't teach
+                  "amazon", "in-person", "algorithms"  # misc
+                  ]
+
+    return re.search(re.escape("SPLITHERE".join(filter_set)).replace("SPLITHERE", "|"), s.lower()) is not None
 
 def send_messages(driver, ls, rate):
     for [url, msg] in ls:
@@ -119,8 +119,9 @@ def send_messages(driver, ls, rate):
         driver.finish_loading()
 
 if __name__ == '__main__':
-    browser = Browser(headless=True)
-    login_selenium(browser, "Zack")
-    listings = get_listings(browser, "Zack", max_pages=5)
-    send_messages(browser, listings, config["Zack"]["rate"])
+    for tutor in config:
+        browser = Browser(headless=True)
+        login_selenium(browser, tutor)
+        listings = get_listings(browser, tutor, max_pages=5)
+        send_messages(browser, listings, config[tutor]["rate"])
 
