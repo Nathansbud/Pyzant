@@ -83,8 +83,8 @@ def build_template(tutor, student, subject, desc):
     else:
         if cs_filter(desc.lower()):
             return None
-        if re.search(r"(college app|common\s?app)", desc.lower()) and subject != 'College Counselling':
-            subject = 'College Counselling'
+        if re.search(r"(college app|common\s?app)", desc.lower()) and subject != 'College Counseling':
+            subject = 'College Counseling'
 
         return replace_generics(template_set[subject])
 
@@ -105,18 +105,23 @@ def cs_filter(s):
 
 def send_messages(driver, ls, rate):
     for [url, msg] in ls:
-        driver.get_and_wait(url)
+        try:
+            driver.get_and_wait(url)
 
-        driver.find_element_by_id("personal_message").send_keys(msg)
-        for checkbox in driver.find_elements_by_css_selector("input[type='checkbox']"):
-            if checkbox.is_selected(): checkbox.click()
+            driver.find_element_by_id("personal_message").send_keys(msg)
+            for checkbox in driver.find_elements_by_css_selector("input[type='checkbox']"):
+                if checkbox.is_selected(): checkbox.click()
 
-        rate_field = driver.find_element_by_id("hourly_rate")
-        rate_field.clear()
-        rate_field.send_keys(rate)
+            rate_field = driver.find_element_by_id("hourly_rate")
+            
+            rate_field.clear()
+            rate_field.send_keys(rate)
 
-        driver.find_element_by_name("commit").click()
-        driver.finish_loading()
+            driver.find_element_by_name("commit").click()
+            driver.finish_loading()
+        except:
+            print(f"Error with {url}; continuing...")
+
 
 if __name__ == '__main__':
     for tutor in config:
