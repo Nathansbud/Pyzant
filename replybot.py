@@ -92,13 +92,13 @@ def build_template(tutor, student, subject, desc):
 
 def cs_filter(s):
     filter_set = ["camera", "reinforcement learning", "deep learning", "machine learning", "tensorflow", "gpt", # ml stuff
-                  "ml", "kubernetes", "nlp", "computer vision", "object detection", "knn",  # more ml stuff
+                  "ml", "kubernetes", "nlp", "computer vision", "object detection", "knn", "ai", # more ml stuff
                   "react", "angular", "mern", "stripe", "bootstrap",  # js stuff
                   "unreal", "unity", "roblox", "minecraft",  # gamedev
-                  "aws", "xcode", "ptc creo", "azure", "powerbi", "blender",  # technologies ic/dw teach
-                  "c++", "bash", "powershell", "ruby", "sql", "gdb", "graphql", "php", "vhdl", "scheme", "haskell", "kotlin", "verilog",  # languages
-                  "cloud computing", "network", "systems", "testing", "linear programming", # fields idw/can't teach
-                  "amazon", "in-person", "algorithms"  # misc
+                  "aws", "xcode", "ptc creo", "azure", "powerbi", "blender", "hadoop",  "arduino", "mobile", # technologies ic/dw teach
+                  "c++", "bash", "powershell", "ruby", "sql", "gdb", "graphql", "php", "vhdl", "scheme", "haskell", "kotlin", "verilog", "assembly", # languages
+                  "cloud computing", "network", "systems", "testing", "linear programming", "information technology", # fields idw/can't teach
+                  "amazon", "in-person", "algorithm", "time complexity", "quaternions", "recurrence", "interview", "biometrics"  # misc
                   ]
 
     return re.search(re.escape("SPLITHERE".join(filter_set)).replace("SPLITHERE", "|"), s.lower()) is not None
